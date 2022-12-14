@@ -460,6 +460,7 @@ if CLIENT then
 	local EC_OUT_CLICK_CLOSE = CreateConVar("easychat_out_click_close", "1", FCVAR_ARCHIVE, "Clicking outside the chatbox closes it")
 	local EC_SERVER_MSG = CreateConVar("easychat_server_msg", "1", FCVAR_ARCHIVE, "Shows convars being changed on the server")
 	local EC_SKIP_STARTUP_MSG = CreateConVar("easychat_skip_startup_msg", "1", FCVAR_ARCHIVE, "Displays random addons startup messages in the console")
+	local _ = CreateConVar("easychat_sync_steam_blocks", "1", FCVAR_ARCHIVE, "Sync Steam blocked users with EasyChat")
 
 	-- timestamps
 	local EC_TIMESTAMPS = CreateConVar("easychat_timestamps", "0", FCVAR_ARCHIVE, "Display timestamps in the chatbox")
@@ -1773,6 +1774,16 @@ if CLIENT then
 		end)
 
 		EasyChat.AddMode("Console", function(text)
+			if IsConCommandBlocked(text) then
+				local text_entry = EasyChat.GetMainTextEntry()
+				if IsValid(text_entry) then
+					local command = text:Split(" ")[1]
+					text_entry:TriggerBlink(("'%s' IS BLOCKED! USE THE CONSOLE!"):format(command))
+				end
+
+				return
+			end
+
 			LocalPlayer():ConCommand(text)
 		end)
 
@@ -2803,6 +2814,12 @@ if CLIENT then
 
 		local chathud = EasyChat.ChatHUD
 		local function chathud_screen_resolution_changed()
+			if not chathud then
+				chathud = EasyChat.ChatHUD
+			end
+
+			if not chathud then return end
+
 			local x, y, w, h = EasyChat.GetDefaultBounds()
 			x, y, w, h = chathud_get_bounds(x, y, w, h)
 
